@@ -114,13 +114,13 @@ rm -rfv /var/cache/* \
 EOF
 
 # Bloco para instalar o gnome shell minimal, e fazer uma última limpeza
-#RUN echo "Install gnome shell minimal" && \
-#dnf5 install gnome-shell --setopt=install_weak_deps=False -y && \
-#dnf5 clean all && \
-#rm -rfv /var/cache/* \
-#        /var/lib/* \
-#        /var/log/* \
-#        /var/tmp/* 
+RUN echo "Install gnome shell minimal" && \
+dnf5 install gnome-shell --setopt=install_weak_deps=False -y && \
+dnf5 clean all && \
+rm -rfv /var/cache/* \
+        /var/lib/* \
+        /var/log/* \
+        /var/tmp/* 
 
 # Bloco para instalar os pacotes rpm listados no arquivo pacotes_rpm
 # E também desativa alguns serviços desnecessários e habilita outros, além de fazer uma limpeza final
