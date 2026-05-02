@@ -48,6 +48,8 @@ nvidia-driver-libs
 nvidia-gpu-firmware
 nvidia-modprobe
 nvidia-persistenced
+wf-recorder
+slurp
 cosmic-app-library.x86_64
 cosmic-applets.x86_64
 cosmic-bg.x86_64
