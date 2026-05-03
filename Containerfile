@@ -127,10 +127,6 @@ rm -rfv /var/cache/* \
 RUN <<EOR
 set -e
 
-echo "Habilita o COPR do Brush"
-dnf5 install -y dnf5-plugins && \
-dnf5 copr enable -y fernando-debian/brush
-
 echo "instala os pacotes rpm necessários"
 tr '\n' ' ' < pacotes_necessarios | xargs dnf5 install -y
 
