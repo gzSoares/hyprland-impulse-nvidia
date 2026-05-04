@@ -128,10 +128,10 @@ RUN <<EOR
 set -e
 
 echo "instala os pacotes rpm necessários"
-tr '\n' ' ' < pacotes_necessarios | xargs dnf5 install -y
+grep -v '^#' pacotes_necessarios | tr '\n' ' ' | dnf5 install -y
 
 echo "Instala pacotes especificos de Desktop Environment"
-tr '\n' ' ' < pacotes_desktop | xargs dnf5 install -y
+grep -v '^#' pacotes_desktop | tr '\n' ' ' | dnf5 install -y
 
 echo "Desativa alguns serviços desnecessários e habilita outros"
 systemctl mask systemd-remount-fs.service
