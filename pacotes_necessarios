@@ -18,6 +18,7 @@ podman
 fpaste
 auditctl
 unzip
+usbutils
 
 # Pacotes não essênciais
 @virtualization
