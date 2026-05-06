@@ -1,4 +1,5 @@
 # Aqui são os pacote referentes ao Desktop no caso Gnome, mas pode ser alterado para outro facilmente colocando-os aqui
+ark
 kcm-plasmalogin
 plasma-desktop
 plasma-login-manager
