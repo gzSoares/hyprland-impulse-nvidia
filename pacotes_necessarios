@@ -34,10 +34,8 @@ libva-nvidia-driver
 ripgrep
 bash-color-prompt
 fira-code-fonts
-papirus-icon-theme
 btop
 fastfetch
-ptyxis
 
 # Drivers da Nvidia
 nvidia-gpu-firmware
