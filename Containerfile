@@ -1,4 +1,3 @@
-```dockerfile
 ARG CHUNKAH_CONFIG_STR
 
 # Estágio de build do módulo da nvidia numa imagem separada
@@ -172,4 +171,3 @@ RUN --mount=from=final,src=/,target=/chunkah,ro \
 
 # Imagem final otimizada
 FROM oci-archive:out.ociarchive
-```
