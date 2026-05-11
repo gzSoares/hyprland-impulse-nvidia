@@ -1,3 +1,4 @@
+```dockerfile id="krdf0g"
 ARG CHUNKAH_CONFIG_STR
 
 # Estágio de build do módulo da nvidia numa imagem separada
@@ -165,4 +166,6 @@ RUN --mount=from=final,src=/,target=/chunkah,ro \
       --prune /sysroot/ \
       --max-layers 128 \
       --label ostree.commit- \
-      --label ostree.final-diffid-
+      --label ostree.final-diffid- \
+      /chunkah
+```
