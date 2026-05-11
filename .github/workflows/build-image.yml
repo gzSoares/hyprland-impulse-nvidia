@@ -2,26 +2,24 @@ name: Build e Push da Imagem Bootc
 
 on:
   schedule:
-    # Dispara às 03h45 diariamente (horário de Brasília)
+    # Dispara as 03h45 diariamente (horário de Brasília)
     - cron: '45 6 * * *'
-
   push:
     branches:
       - main
     paths-ignore:
       - 'README.md'
-
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Força o uso do Node.js 24 para evitar avisos de depreciação
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
@@ -33,11 +31,9 @@ jobs:
       - name: Extrair Versão da Imagem Base
         id: base_version
         run: |
+          # Busca a linha que contém FROM, extrai a imagem e a tag
           VERSION=$(grep '^FROM' Containerfile | head -n 1 | awk -F: '{print $2}' | awk '{print $1}')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Configurar QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -51,8 +47,7 @@ jobs:
 
       - name: Gerar Timestamp (Horário de Brasília)
         id: timestamp
-        run: |
-          echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
+        run: echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
 
       - name: Extrair metadados
         id: meta
@@ -66,26 +61,14 @@ jobs:
             type=sha,format=short
             latest
 
-      - name: Build e Push da Imagem
-        uses: docker/build-push-action@v6
+      - name: Build e Push da Imagem (Rebuild Completo)
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Containerfile
-
-          # Builda a stage do Chunkah
-          target: chunkah
-
           push: true
           pull: true
           no-cache: true
-
-          # Necessário para Chunkah
-          build-args: |
-            CHUNKAH_CONFIG_STR=dummy
-
-          # Evita problemas com attestation/provenance
-          provenance: false
-
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -97,15 +80,9 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
             ✅ Rebuild Completo Bootc concluído!
-
-            Base:
-            ${{ steps.base_version.outputs.version }}
-
-            Tag:
-            ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
-
-            Repositório:
-            ${{ github.repository }}
+            Base: ${{ steps.base_version.outputs.version }}
+            Tag Gerada: ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
+            Repositório: ${{ github.repository }}
 
       - name: Notificar Falha no Telegram
         if: failure()
@@ -115,9 +92,5 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
             ❌ Erro no Rebuild Agendado!
-
-            Base tentada:
-            ${{ steps.base_version.outputs.version }}
-
-            Logs:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Base tentada: ${{ steps.base_version.outputs.version }}
+            Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
