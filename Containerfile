@@ -157,8 +157,6 @@ RUN bootc container lint
 
 # Stage do Chunkah
 FROM quay.io/coreos/chunkah:latest AS chunkah
-# Stage do Chunkah
-FROM quay.io/coreos/chunkah:latest AS chunkah
 
 ARG CHUNKAH_CONFIG_STR
 
