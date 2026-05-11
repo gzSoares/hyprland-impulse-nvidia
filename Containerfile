@@ -1,5 +1,3 @@
-ARG CHUNKAH_CONFIG_STR
-
 # Estágio de build do módulo da nvidia numa imagem separada
 # Para evitar poluir a imagem final com os pacotes de desenvolvimento do kernel e ferramentas de construção
 FROM quay.io/fedora/fedora-bootc:44 AS builder
@@ -31,7 +29,7 @@ akmods --force --kernels "$KERNEL_VERSION"
 ELL
 
 # Imagem final do container
-FROM quay.io/fedora/fedora-bootc:44 AS final
+FROM quay.io/fedora/fedora-bootc:44
 
 # Copia o módulo da nvidia construído no estágio anterior
 COPY --from=builder /var/cache/akmods/nvidia/kmod-nvidia*.rpm ./
@@ -112,7 +110,7 @@ dnf5 clean all
 rm -rfv /var/cache/* \
         /var/lib/* \
         /var/log/* \
-        /var/tmp/*
+        /var/tmp/* 
 EOF
 
 # Bloco para instalar o gnome shell minimal, e fazer uma última limpeza
@@ -122,7 +120,7 @@ dnf5 clean all && \
 rm -rfv /var/cache/* \
        /var/lib/* \
        /var/log/* \
-       /var/tmp/*
+       /var/tmp/* 
 
 # Bloco para instalar os pacotes rpm listados no arquivo pacotes_rpm
 # E também desativa alguns serviços desnecessários e habilita outros, além de fazer uma limpeza final
@@ -141,8 +139,8 @@ systemctl mask akmods-keygen@akmods-keygen.service
 systemctl enable libvirtd.service
 systemctl enable spice-vdagentd.service
 
-echo "Limpeza de resíduos de construção"
-rm -rvf pacotes_rpm
+echo "Limpeza de resíduos de construção" 
+rm -rvf pacotes_rpm 
 dnf5 clean all
 rm -rfv /var/cache/* \
         /var/lib/* \
@@ -150,20 +148,8 @@ rm -rfv /var/cache/* \
         /var/tmp/* \
         /var/usrlocal/share/applications/mimeinfo.cache \
         /var/roothome/.*
+        
 EOR
 
-# Verificar por erros na imagem
+# Verificar por erros na imagem 
 RUN bootc container lint
-
-# Stage do Chunkah
-FROM quay.io/coreos/chunkah:latest AS chunkah
-
-ARG CHUNKAH_CONFIG_STR
-
-RUN --mount=from=final,src=/,target=/chunkah,ro \
-    chunkah build \
-      --prune /sysroot/ \
-      --max-layers 128 \
-      --label ostree.commit- \
-      --label ostree.final-diffid- \
-      /chunkah
