@@ -1,8 +1,9 @@
+```yaml
 name: Build e Push da Imagem Bootc
 
 on:
   schedule:
-    # Dispara as 03h45 diariamente (horário de Brasília)
+    # Dispara às 03h45 diariamente (horário de Brasília)
     - cron: '45 6 * * *'
 
   push:
@@ -71,15 +72,19 @@ jobs:
         with:
           context: .
           file: ./Containerfile
+
+          # Builda a stage do Chunkah
+          target: chunkah
+
           push: true
           pull: true
           no-cache: true
 
-          # Necessário para o Chunkah
+          # Necessário para Chunkah
           build-args: |
             CHUNKAH_CONFIG_STR=dummy
 
-          # Necessário para RUN --mount funcionar corretamente
+          # Evita problemas com attestation/provenance
           provenance: false
 
           tags: ${{ steps.meta.outputs.tags }}
@@ -117,3 +122,4 @@ jobs:
 
             Logs:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+```
