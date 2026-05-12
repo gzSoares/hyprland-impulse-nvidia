@@ -1,3 +1,4 @@
+```yaml
 name: Build e Push da Imagem Bootc
 
 on:
@@ -14,12 +15,12 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  # Força o uso do Node.js 24 para evitar avisos de depreciação
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
@@ -41,11 +42,16 @@ jobs:
 
       - name: Login no GitHub Container Registry
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u "${{ github.actor }}" --password-stdin ${{ env.REGISTRY }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          buildah login \
+            -u "${{ github.actor }}" \
+            --password-stdin \
+            ${{ env.REGISTRY }}
 
       - name: Gerar Timestamp (Horário de Brasília)
         id: timestamp
-        run: echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
+        run: |
+          echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
 
       - name: Extrair metadados
         id: meta
@@ -61,25 +67,31 @@ jobs:
 
       - name: Build da Imagem com Buildah
         run: |
-          TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
 
           sudo buildah build \
-            --format docker \
             --skip-unused-stages=false \
             --security-opt=label=disable \
             --pull \
             --no-cache \
-            -t $TAG \
+            -t "$FIRST_TAG" \
             -f Containerfile \
-            -v $(pwd):/run/src \
+            -v "$(pwd):/run/src" \
             .
 
       - name: Push da Imagem
         run: |
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+
           while read -r tag; do
             [ -z "$tag" ] && continue
-            buildah tag $(echo "${{ steps.meta.outputs.tags }}" | head -n 1) "$tag"
+
+            if [ "$tag" != "$FIRST_TAG" ]; then
+              buildah tag "$FIRST_TAG" "$tag"
+            fi
+
             buildah push "$tag"
+
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Notificar Sucesso no Telegram
@@ -104,3 +116,4 @@ jobs:
             ❌ Erro no Rebuild Agendado!
             Base tentada: ${{ steps.base_version.outputs.version }}
             Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+```
