@@ -1,7 +1,6 @@
 name: Build e Push da Imagem Bootc
 on:
   schedule:
-    # Dispara as 03h45 diariamente (horário de Brasília)
     - cron: '45 6 * * *'
   push:
     branches:
@@ -11,7 +10,7 @@ on:
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ferlinuxdebian/bootc-gnome-minimal
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   build-and-push:
@@ -40,50 +39,35 @@ jobs:
             --password-stdin \
             ${{ env.REGISTRY }}
 
-      - name: Extrair metadados (labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
       - name: Build da Imagem com Buildah
         run: |
-          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          VERSION="${{ steps.base_version.outputs.version }}"
-          DATE="${{ steps.timestamp.outputs.date }}"
-
           sudo buildah build \
             --skip-unused-stages=false \
             --security-opt=label=disable \
-            -t "${FULL_IMAGE}:${VERSION}-${DATE}" \
+            -t "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}" \
             -f Containerfile \
             -v $(pwd):/run/src \
             .
 
       - name: Aplicar Tags Adicionais
         run: |
-          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          VERSION="${{ steps.base_version.outputs.version }}"
-          DATE="${{ steps.timestamp.outputs.date }}"
+          SOURCE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}"
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
 
-          SOURCE="${FULL_IMAGE}:${VERSION}-${DATE}"
+          sudo buildah tag "${SOURCE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.base_version.outputs.version }}-latest"
+          sudo buildah tag "${SOURCE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          sudo buildah tag "${SOURCE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
+          sudo buildah tag "${SOURCE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}"
 
-          sudo buildah tag "${SOURCE}" "${FULL_IMAGE}:${VERSION}-latest"
-          sudo buildah tag "${SOURCE}" "${FULL_IMAGE}:latest"
-          sudo buildah tag "${SOURCE}" "${FULL_IMAGE}:main"
-          sudo buildah tag "${SOURCE}" "${FULL_IMAGE}:sha-${SHORT_SHA}"
-
-      - name: Push de Todas as Tags para o Registry
+      - name: Push de Todas as Tags
         run: |
-          FULL_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           VERSION="${{ steps.base_version.outputs.version }}"
           DATE="${{ steps.timestamp.outputs.date }}"
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
 
           for TAG in "${VERSION}-${DATE}" "${VERSION}-latest" "latest" "main" "sha-${SHORT_SHA}"; do
-            echo "→ Pushing ${FULL_IMAGE}:${TAG}"
-            sudo buildah push "${FULL_IMAGE}:${TAG}"
+            echo "→ Pushing ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}"
+            sudo buildah push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}"
           done
 
       - name: Notificar Sucesso no Telegram
@@ -96,7 +80,7 @@ jobs:
             ✅ Rebuild Completo Bootc concluído!
             Base: ${{ steps.base_version.outputs.version }}
             Tag Gerada: ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
-            Repositório: ${{ github.repository }}
+            Repositório: ${{ env.IMAGE_NAME }}
 
       - name: Notificar Falha no Telegram
         if: failure()
