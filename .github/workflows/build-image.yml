@@ -37,24 +37,12 @@ jobs:
       - name: Instalar Buildah
         run: |
           sudo apt-get update
-          sudo apt-get install -y buildah uidmap fuse-overlayfs slirp4netns
-
-      - name: Configurar Buildah Rootless
-        run: |
-          mkdir -p ~/.config/containers
-
-          cat > ~/.config/containers/storage.conf <<EOF
-          [storage]
-          driver = "overlay"
-
-          [storage.options]
-          mount_program = "/usr/bin/fuse-overlayfs"
-          EOF
+          sudo apt-get install -y buildah
 
       - name: Login no GitHub Container Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | \
-          buildah login \
+          sudo buildah login \
             -u "${{ github.actor }}" \
             --password-stdin \
             ${{ env.REGISTRY }}
@@ -80,7 +68,9 @@ jobs:
         run: |
           LOCAL_IMAGE=localhost/bootc-image
 
-          buildah build \
+          sudo buildah build \
+            --storage-driver=vfs \
+            --format docker \
             --skip-unused-stages=false \
             --security-opt=label=disable \
             --pull \
@@ -97,9 +87,15 @@ jobs:
           while read -r tag; do
             [ -z "$tag" ] && continue
 
-            buildah tag "$LOCAL_IMAGE" "$tag"
+            echo "Tagging: $tag"
 
-            buildah push "$tag"
+            sudo buildah tag "$LOCAL_IMAGE" "$tag"
+
+            echo "Pushing: $tag"
+
+            sudo buildah push \
+              --storage-driver=vfs \
+              "$tag"
 
           done <<< "${{ steps.meta.outputs.tags }}"
 
