@@ -18,7 +18,8 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Mudança para Ubuntu 24.04 para ter o Buildah atualizado
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -57,14 +58,17 @@ jobs:
             latest
 
       - name: Build da Imagem com Buildah (Compatível com Chunkah)
+        env:
+          BUILDAH_FORMAT: docker
         run: |
-          # O buildah usa os mesmos metadados de tags gerados anteriormente
-          # Pegamos a primeira tag da lista para o build inicial
           FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
           
-          sudo buildah build \
+          # sudo -E preserva a variável BUILDAH_FORMAT para o root
+          # O parser do Buildah 1.30+ no Ubuntu 24.04 resolve o erro de Here-Document
+          sudo -E buildah build \
             --skip-unused-stages=false \
             --security-opt=label=disable \
+            --layers \
             -t "$FIRST_TAG" \
             -f Containerfile \
             -v $(pwd):/run/src \
@@ -72,7 +76,6 @@ jobs:
 
       - name: Aplicar Tags Adicionais e Push
         run: |
-          # Loop para taguear e enviar todas as variações geradas pelo metadata-action
           FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
           for TAG in ${{ steps.meta.outputs.tags }}; do
             if [ "$TAG" != "$FIRST_TAG" ]; then
@@ -88,7 +91,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ✅ Rebuild Completo Bootc (Buildah) concluído!
+            ✅ Rebuild Completo Bootc (Buildah 24.04) concluído!
             Base: ${{ steps.base_version.outputs.version }}
             Tag Gerada: ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
             Repositório: ${{ github.repository }}
@@ -100,6 +103,6 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            ❌ Erro no Rebuild Agendado (Buildah)!
+            ❌ Erro no Rebuild Agendado (Buildah 24.04)!
             Base tentada: ${{ steps.base_version.outputs.version }}
             Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
