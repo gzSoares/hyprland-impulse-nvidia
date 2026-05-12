@@ -1,108 +1,69 @@
-name: Build e Push da Imagem Bootc
+- name: Login no GitHub Container Registry
+    uses: docker/login-action@v3
+    with:
+      registry: ${{ env.REGISTRY }}
+      username: ${{ github.actor }}
+      password: ${{ secrets.GITHUB_TOKEN }}
 
-on:
-  schedule:
-    # Dispara as 03h45 diariamente (horário de Brasília)
-    - cron: '45 6 * * *'
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-  workflow_dispatch:
+  - name: Gerar Timestamp (Horário de Brasília)
+    id: timestamp
+    run: echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  - name: Extrair metadados
+    id: meta
+    uses: docker/metadata-action@v5
+    with:
+      images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      tags: |
+        type=raw,value=${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
+        type=raw,value=${{ steps.base_version.outputs.version }}-latest
+        type=ref,event=branch
+        type=sha,format=short
+        latest
 
-jobs:
-  build-and-push:
-    # Mudança para Ubuntu 24.04 para ter o Buildah atualizado
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      packages: write
+  - name: Build da Imagem com Podman (Suporte a Here-Docs)
+    run: |
+      FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+      
+      # O Podman possui um parser mais resiliente para scripts multilinhas
+      sudo podman build \
+        --format docker \
+        --skip-unused-stages=false \
+        --security-opt=label=disable \
+        -t "$FIRST_TAG" \
+        -f Containerfile \
+        -v $(pwd):/run/src \
+        .
 
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+  - name: Aplicar Tags Adicionais e Push
+    run: |
+      FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+      for TAG in ${{ steps.meta.outputs.tags }}; do
+        if [ "$TAG" != "$FIRST_TAG" ]; then
+          sudo podman tag "$FIRST_TAG" "$TAG"
+        fi
+        sudo podman push "$TAG" docker://"$TAG"
+      done
 
-      - name: Extrair Versão da Imagem Base
-        id: base_version
-        run: |
-          VERSION=$(grep '^FROM' Containerfile | head -n 1 | awk -F: '{print $2}' | awk '{print $1}')
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+  - name: Notificar Sucesso no Telegram
+    if: success()
+    uses: appleboy/telegram-action@master
+    with:
+      to: ${{ secrets.TELEGRAM_TO }}
+      token: ${{ secrets.TELEGRAM_TOKEN }}
+      message: |
+        ✅ Rebuild Completo Bootc (Podman) concluído!
+        Base: ${{ steps.base_version.outputs.version }}
+        Tag Gerada: ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
+        Repositório: ${{ github.repository }}
 
-      - name: Login no GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Gerar Timestamp (Horário de Brasília)
-        id: timestamp
-        run: echo "date=$(TZ='America/Sao_Paulo' date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
-
-      - name: Extrair metadados
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
-            type=raw,value=${{ steps.base_version.outputs.version }}-latest
-            type=ref,event=branch
-            type=sha,format=short
-            latest
-
-      - name: Build da Imagem com Buildah (Compatível com Chunkah)
-        env:
-          BUILDAH_FORMAT: docker
-        run: |
-          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
-          
-          # sudo -E preserva a variável BUILDAH_FORMAT para o root
-          # O parser do Buildah 1.30+ no Ubuntu 24.04 resolve o erro de Here-Document
-          sudo -E buildah build \
-            --skip-unused-stages=false \
-            --security-opt=label=disable \
-            --layers \
-            -t "$FIRST_TAG" \
-            -f Containerfile \
-            -v $(pwd):/run/src \
-            .
-
-      - name: Aplicar Tags Adicionais e Push
-        run: |
-          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
-          for TAG in ${{ steps.meta.outputs.tags }}; do
-            if [ "$TAG" != "$FIRST_TAG" ]; then
-              sudo buildah tag "$FIRST_TAG" "$TAG"
-            fi
-            sudo buildah push "$TAG" docker://"$TAG"
-          done
-
-      - name: Notificar Sucesso no Telegram
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ✅ Rebuild Completo Bootc (Buildah 24.04) concluído!
-            Base: ${{ steps.base_version.outputs.version }}
-            Tag Gerada: ${{ steps.base_version.outputs.version }}-${{ steps.timestamp.outputs.date }}
-            Repositório: ${{ github.repository }}
-
-      - name: Notificar Falha no Telegram
-        if: failure()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ❌ Erro no Rebuild Agendado (Buildah 24.04)!
-            Base tentada: ${{ steps.base_version.outputs.version }}
-            Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  - name: Notificar Falha no Telegram
+    if: failure()
+    uses: appleboy/telegram-action@master
+    with:
+      to: ${{ secrets.TELEGRAM_TO }}
+      token: ${{ secrets.TELEGRAM_TOKEN }}
+      message: |
+        ❌ Erro no Rebuild Agendado (Podman)!
+        Base tentada: ${{ steps.base_version.outputs.version }}
+        Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
