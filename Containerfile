@@ -81,7 +81,8 @@ ARG CHUNKAH_CONFIG_STR
 RUN --mount=from=final,src=/,target=/chunkah,ro \
     --mount=type=bind,target=/run/src,rw \
         chunkah build --max-layers 128 \
-          --label ostree.commit- --label ostree.final-diffid- \
+          --label ostree.commit- \
+          --label ostree.final-diffid- \
           > /run/src/out.ociarchive
 FROM oci-archive:out.ociarchive
 LABEL ostree.bootable="true"
