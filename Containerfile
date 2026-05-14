@@ -75,7 +75,6 @@ RUN grep -v '^#' pacotes_necessarios | tr '\n' ' ' | xargs dnf5 install -y && \
 RUN bootc container lint
 
 # Otimização da imagem final usando o chunkah aproveitando layers compartilhados
-ARG CHUNKAH_CONFIG_STR
 FROM quay.io/coreos/chunkah AS chunkah
 ARG CHUNKAH_CONFIG_STR
 RUN --mount=from=final,src=/,target=/chunkah,ro \
