@@ -6,7 +6,7 @@ Além do `bootc`, a imagem utiliza o [chunkah](https://github.com/coreos/chunkah
 
 ## Arquitetura do Projeto
 
-- **Base:** Fedora Linux 44
+- **Base:** [fedora-bootc](https://quay.io/repository/fedora/fedora-bootc) (Imagem OCI inicializável Oficial do projeto Fedora)
 - **Interface:** GNOME Shell
 - **Drivers:** Nvidia via repositório Negativo17, incluídos na imagem
 - **Automação:** GitHub Actions com build diário às 03h45 (horário de Brasília)
