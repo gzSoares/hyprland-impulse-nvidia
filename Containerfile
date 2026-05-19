@@ -19,7 +19,7 @@ COPY 10-nvidia-args.toml locale.conf post-install.sh pacotes_desktop pacotes_nec
 RUN mkdir -vp /var/roothome /data /var/home && \
     dnf5 -y upgrade --refresh && \
     dnf5 -y install kernel-modules-extra --refresh && \
-    printf 'omit_dracutmodules+=" nfs "\nomit_drivers+=" nfs nfsv3 nfsv4 nfs_acl nfs_common sunrpc rxrpc rpcrdma auth_rpcgss rpcsec_gss_krb5 "\n' | tee /etc/dracut.conf.d/no-nfs.conf >/dev/null && \
+    printf 'omit_dracutmodules+=" nfs "\nomit_drivers+=" nfs nfsv3 nfsv4 nfs_acl nfs_common sunrpc rxrpc rpcrdma auth_rpcgss rpcsec_gss_krb5 "\n' | tee /etc/dracut.conf.d/no-nfs.conf && \
     kver="$(rpm -q kernel-core --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')" && \
     dracut -f /usr/lib/modules/${kver}/initramfs.img ${kver} && \
     dnf5 -y install wget && \
@@ -31,7 +31,7 @@ RUN mkdir -vp /var/roothome /data /var/home && \
     rpm -vi --nodeps nvidia-driver-cuda*.rpm && \
     dnf5 -y install ./kmod-nvidia-*.rpm && \
     rm -rvf /opt && mkdir -vp /var/opt && ln -vs /var/opt /opt && \
-    mkdir -vp /var/usrlocal && mv -v /usr/local/* /var/usrlocal/ 2>/dev/null && \
+    mkdir -vp /var/usrlocal && mv -v /usr/local/* /var/usrlocal/ && \
     rm -rvf /usr/local && ln -vs /var/usrlocal /usr/local && \
     mv -v vconsole.conf /etc/vconsole.conf && \
     mv -v locale.conf /etc/locale.conf && \
@@ -62,7 +62,7 @@ RUN grep -v '^#' pacotes_necessarios | tr '\n' ' ' | xargs dnf5 install -y && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
     systemctl enable libvirtd.service && \
     systemctl enable spice-vdagentd.service && \
-    rm -rvf pacotes_rpm && \
+    rm -fv pacotes_necessarios pacotes_desktop && \
     dnf5 clean all && \
     rm -rfv /var/cache/* \
     /var/lib/* \
