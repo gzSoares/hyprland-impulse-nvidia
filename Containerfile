@@ -215,6 +215,7 @@ RUN dnf5 install -y \
     upower \
     thermald \
     lm_sensors \
+    ntsync-autoload \
     wtype \
     ydotool && \
     dnf5 clean all && \
