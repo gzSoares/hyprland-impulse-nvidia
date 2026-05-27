@@ -41,11 +41,8 @@ RUN mkdir -vp /var/roothome /data /var/home && \
     chmod +x /usr/bin/post-install.sh && \
     systemctl enable post-install.service && \
     rm -rvf kmod-nvidia-*.rpm nvidia-kmod-common*.rpm nvidia-driver-cuda*.rpm && \
-    dnf5 clean all && \
-    rm -rfv /var/cache/* \
-    /var/lib/* \
-    /var/log/* \
-    /var/tmp/*
+     dnf5 clean all && \
+    rm -rfv /var/cache/* /var/log/* /var/tmp/*
 
 # Habilitar repositórios COPR
 RUN dnf5 install -y dnf5-plugins && \
@@ -215,7 +212,6 @@ RUN dnf5 install -y \
     upower \
     thermald \
     lm_sensors \
-    ntsync-autoload \
     wtype \
     ydotool && \
     dnf5 clean all && \
@@ -262,36 +258,35 @@ RUN sed -i \
     '/dbus-update-activation-environment --systemd/a\    hl.exec_cmd("sleep 2 && systemctl --user start xdg-desktop-portal-hyprland xdg-desktop-portal")' \
     /etc/skel/.config/hypr/hyprland/execs.lua
 
-# instalação dos pacotes necessários para o ambiente de desktop e a base
+# Habilitar/mascarar serviços
+RUN systemctl enable NetworkManager && \
+    systemctl enable bluetooth && \
+    systemctl enable thermald && \
+    systemctl mask systemd-remount-fs.service && \
+    rm -rfv /var/roothome/.*
+
+# Instalação dos pacotes definidos nos arquivos de lista
 RUN grep -v '^#' /pacotes_necessarios | grep '^@' | sed 's/^@//' | \
     xargs -r dnf5 group install -y && \
     grep -v '^#' /pacotes_necessarios | grep -v '^@' | grep -v '^$' | \
     xargs -r dnf5 install -y && \
-    systemctl mask systemd-remount-fs.service && \
-    systemctl mask akmods-keygen@akmods-keygen.service && \
-    systemctl enable libvirtd.service && \
-    systemctl enable spice-vdagentd.service && \
-    rm -fv pacotes_necessarios pacotes_desktop && \
     dnf5 clean all && \
-    rm -rfv /var/cache/* \
-    /var/lib/* \
-    /var/log/* \
-    /var/tmp/* \
-    /var/usrlocal/share/applications/mimeinfo.cache \
-    /var/roothome/.*
+    rm -rfv /var/cache/* /var/log/* /var/tmp/*
 
-# Verificação da imagem com o bootc container lint
+# Verificação final
 RUN bootc container lint
 
-# Otimização da imagem final usando o chunkah aproveitando layers compartilhados
+# Estágio de otimização com Chunkah
 FROM quay.io/coreos/chunkah AS chunkah
 ARG CHUNKAH_CONFIG_STR
+
 RUN --mount=from=final,src=/,target=/chunkah,ro \
     --mount=type=bind,target=/run/src,rw \
-        chunkah build --max-layers 128 \
-          --label ostree.commit- \
-          --label ostree.final-diffid- \
-          > /run/src/out.ociarchive
+    chunkah build --max-layers 128 \
+    --label ostree.commit- \
+    --label ostree.final-diffid- \
+    > /run/src/out.ociarchive
+
 FROM oci-archive:out.ociarchive
 LABEL ostree.bootable="true"
 LABEL containers.bootc="1"
