@@ -1,90 +1,130 @@
-# Fedora Bootc Imagem Personalizada
+## Fedora Bootc Hyprland + Illogical-Impulse Shell
 
-Este repositório contém a definição da imagem de sistema operacional baseada em **Fedora 44**, construída com `bootc`. O sistema é imutável, voltado para uso desktop com suporte a drivers Nvidia e interface GNOME.
+Este repositório contém uma imagem personalizada baseada no fedora-boot imagem oficial, usando o conceito de sistemas imutáveis com bootc.
 
-Além do `bootc`, a imagem utiliza o [chunkah](https://github.com/coreos/chunkah) para otimizar o processo de atualização, dividindo a imagem em camadas adicionais e reduzindo o volume de dados transferidos a cada update do bootc.
+A proposta do projeto é ser simples e didática, ajudando iniciantes a aprender como criar suas próprias imagens de sistema personalizadas com bootc.
 
-## Arquitetura do Projeto
+## O que acompanha a imagem
 
-- **Base:** [fedora-bootc](https://quay.io/repository/fedora/fedora-bootc) (Imagem OCI inicializável Oficial do projeto Fedora)
-- **Interface:** GNOME Shell
-- **Drivers:** Nvidia via repositório Negativo17, incluídos na imagem
-- **Automação:** GitHub Actions com build diário às 03h45 (horário de Brasília)
+</details>
 
-## Estrutura de Arquivos
+<details>
+  <summary>Software overview</summary>
 
-| Arquivo | Função |
-|---|---|
-| `Containerfile` | Instruções de build da imagem (instalação de pacotes e drivers) |
-| `pacotes_desktop` | Lista de pacotes relacionados à interface gráfica (GNOME, Plasma e afins) |
-| `pacotes_necessarios` | Lista de pacotes essenciais ao sistema, acrescida de pacotes de escolha pessoal |
-| `post-install.sh` | Script de pós-instalação: remove o repositório Fedora Flatpak, adiciona o Flathub e instala os Flatpaks |
-| `.github/workflows` | Arquivo `.yml` responsável pelo build automático via GitHub Actions |
-| `10-nvidia-args.toml` | Parâmetros para colocar o driver `nouveau` no blacklist |
-| `post-install.service` | Serviço systemd que executa o script de pós-instalação no primeiro boot |
-| `vconsole.conf` | Configuração do TTY para pt-BR |
-| `locale.conf` | Configuração de localidade do sistema para pt-BR |
-| `config.toml` | Arquivo de kickstart do Anaconda para geração de ISO de instalação |
-| `zram-generator.conf` | Configura o zram com tamanho igual ao da RAM, usando o algoritmo de compressão zstd |
+  | Software | Purpose |
+  | ------------- | ------------- |
+  | [Hyprland](https://github.com/hyprwm/hyprland) | The compositor (manages and renders windows) |
+  | [Quickshell](https://quickshell.outfoxxed.me/) | A QtQuick-based widget system, used for the status bar, sidebars, etc. |
+  | [Illogical-Impulse](https://github.com/end-4/dots-hyprland) |  |
 
-## Ciclo de Atualização
+</details>
 
-A imagem é reconstruída automaticamente todos os dias às 03h45. Uma notificação via Telegram (integração com o BotFather) é enviada ao final de cada build, indicando sucesso ou falha.
+</details>
 
-![Notificação Telegram](https://i.imgur.com/5Ip7A1N.png)
+<div align="center">
+    <h2>• screenshots •</h2>
+    <h3></h3>
+</div>
 
-### Atualização manual
+<div align="center">
+    <img src="assets/illogical-impulse.svg" alt="illogical-impulse logo" style="float:left; width:400;">
+</div>
 
-```bash
-# Verificar se há nova imagem disponível
+Widget system: Quickshell | Support: Yes
+
+[Showcase video](https://www.youtube.com/watch?v=RPwovTInagE)
+
+| AI, settings app | Some widgets |
+|:---|:---------------|
+| <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5d4e7d07-d0b4-4406-a4c9-ed7ba90e3fe4" /> | <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/6a32395f-9437-4192-8faf-2951a9e84cbe" /> |
+| Window management | wow look its orange |
+| <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/c51bed8b-3670-4d4c-9074-873be224fb8e" /> | <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/98703a66-0743-439f-a721-cef7afa6ab95" /> |
+
+<div align="center">
+    <h2>• thank you •</h2>
+    <h3></h3>
+</div>
+
+## Base da imagem
+
+* Base: `fedora-bootc`
+* Compositor: Hyprland
+* Interface: Illogical-Impulse Material Shell
+* Sistema: Imutável via bootc
+* Distribuição base: Fedora Project
+* Formato de distribuição: Imagem OCI inicializável
+* Instalação: ISO personalizada inclusa no projeto
+
+## Estrutura dos arquivos
+
+| Arquivo                | Função                                          |
+| ---------------------- | ----------------------------------------------- |
+| `Containerfile`        | Define como a imagem é construída               |
+| `pacotes_desktop`      | Lista dos pacotes do ambiente gráfico           |
+| `pacotes_necessarios`  | Pacotes essenciais do sistema                   |
+| `post-install.sh`      | Script executado no primeiro boot               |
+| `post-install.service` | Serviço systemd responsável pelo pós-instalação |
+| `config.toml`          | Configuração usada para gerar a ISO             |
+| `locale.conf`          | Configuração regional pt-BR                     |
+| `vconsole.conf`        | Configuração do terminal TTY                    |
+| `zram-generator.conf`  | Configuração de zram                            |
+| `.github/workflows`    | Automação de builds via GitHub Actions          |
+
+## Atualizando o sistema
+
+```bash id="yq8yxv"
+# Verificar atualizações
 sudo bootc upgrade --check
 
-# Aplicar a atualização
+# Aplicar atualização
 sudo bootc upgrade
 
-# Após reiniciar, verificar o que mudou
-rpm-ostree db diff
-
-# Reiniciar para ativar a nova imagem
+# Reiniciar o sistema
 sudo reboot
 ```
 
-## Comandos de Manutenção
+## Comandos úteis
 
-```bash
-# Ver a versão atual da imagem
+```bash id="yq0x9j"
+# Ver informações da imagem atual
 bootc status
 
-# Reverter para a imagem anterior
+# Voltar para a imagem anterior
 sudo bootc rollback
-
-# Migrar para esta imagem (primeira utilização)
-sudo bootc switch ghcr.io/ferlinuxdebian/bootc-gnome-minimal:latest
 ```
 
-## Criação de ISO Personalizada
+## Aviso sobre bootc switch
 
-### Build da imagem local
+Agora é possível realizar o bootc switch diretamente a partir do Fedora Silverblue para esta imagem.
 
-```bash
-# baixar os arquivos do projeto
-git clone https://github.com/Ferlinuxdebian/bootc-gnome-minimal.git
-cd bootc-gnome-minimal
-mkdir output
+```
+sudo bootc switch ghcr.io/gzSoares/hyprland-impulse:latest
+```
 
-# build do projeto com o buildah
+## Clonando o projeto
+
+```bash id="66d9r8"
+git clone https://github.com/gzSoares/hyprland-impulse.git
+cd hyprland-impulse
+```
+
+## Build local da imagem
+
+```bash id="i8ls7u"
 sudo buildah build \
     --skip-unused-stages=false \
     --security-opt=label=disable \
-    -t "bootc-gnome-minimal" \
+    -t "hyprland-impulse" \
     -f Containerfile \
     -v $(pwd):/run/src \
     .
 ```
 
-### Geração da ISO de instalação
+## Gerando a ISO de instalação
 
-```bash
+```bash id="eolam0"
+mkdir -p output
+
 sudo podman run \
     --rm \
     -it \
@@ -97,7 +137,32 @@ sudo podman run \
     quay.io/centos-bootc/bootc-image-builder:latest \
     --type anaconda-iso \
     --rootfs btrfs \
-    localhost/bootc-gnome-minimal
+    localhost/hyprland-impulse
 ```
 
-Após a conclusão, o arquivo `output/bootiso/install.iso` estará disponível para uso na instalação do sistema.
+## Download da ISO pelo GitHub Actions
+
+Este repositório também gera automaticamente a ISO através do GitHub Actions.
+
+Para baixar a ISO gerada automaticamente:
+
+1. Abra a aba `Actions` do repositório
+2. Entre no workflow desejado
+3. Aguarde o build finalizar
+4. Role até a seção `Artifacts`
+5. Baixe o artefato contendo a ISO
+
+## Credits
+
+- **[Fedora-Bootc](https://docs.fedoraproject.org/en-US/bootc/):** Base system.
+- **[end-4](https://github.com/end-4):** Creator of illogical-impulse.
+- **[Quickshell](https://quickshell.org/):** Widget system.
+- **[Hyprland](https://hypr.land/):** Compositor.
+- ** Um agradecimento especial ao [Ferlinuxdebian](https://github.com/Ferlinuxdebian) que me ajudou na realização desse projeto. 
+
+# 🚀 Sobre o Projeto
+
+> ✨ **Este projeto foi criado com base na minha experiência de uso.**  
+> Mas sinta-se à vontade para explorar, testar e adaptar da forma que fizer mais sentido para você. ✨
+
+---
