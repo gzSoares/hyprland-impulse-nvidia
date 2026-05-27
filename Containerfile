@@ -15,7 +15,7 @@ FROM quay.io/fedora/fedora-bootc:44 AS final
 LABEL ostree.bootable="true"
 LABEL containers.bootc="1"
 COPY --from=builder /var/cache/akmods/nvidia/kmod-nvidia*.rpm ./
-COPY 10-nvidia-args.toml locale.conf post-install.sh pacotes_desktop pacotes_necessarios post-install.service vconsole.conf zram-generator.conf ./
+COPY 10-nvidia-args.toml locale.conf post-install.sh pacotes_necessarios post-install.service vconsole.conf zram-generator.conf ./
 RUN mkdir -vp /var/roothome /data /var/home && \
     dnf5 -y upgrade --refresh && \
     dnf5 -y install kernel-modules-extra --refresh && \
@@ -263,8 +263,10 @@ RUN sed -i \
     /etc/skel/.config/hypr/hyprland/execs.lua
 
 # instalação dos pacotes necessários para o ambiente de desktop e a base
-RUN grep -v '^#' pacotes_necessarios | tr '\n' ' ' | xargs dnf5 install -y && \
-    grep -v '^#' pacotes_desktop | tr '\n' ' ' | xargs dnf5 install -y && \
+RUN grep -v '^#' /pacotes_necessarios | grep '^@' | sed 's/^@//' | \
+    xargs -r dnf5 group install -y && \
+    grep -v '^#' /pacotes_necessarios | grep -v '^@' | grep -v '^$' | \
+    xargs -r dnf5 install -y && \
     systemctl mask systemd-remount-fs.service && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
     systemctl enable libvirtd.service && \
