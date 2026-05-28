@@ -212,6 +212,7 @@ RUN dnf5 install -y \
     upower \
     thermald \
     lm_sensors \
+    ntsync-autoload \
     wtype \
     ydotool && \
     dnf5 clean all && \
@@ -263,7 +264,17 @@ RUN systemctl enable NetworkManager && \
     systemctl enable bluetooth && \
     systemctl enable thermald && \
     systemctl mask systemd-remount-fs.service && \
-    rm -rfv /var/roothome/.*
+    systemctl mask akmods-keygen@akmods-keygen.service && \
+    systemctl enable libvirtd.service && \
+    systemctl enable spice-vdagentd.service && \
+    rm -fv pacotes_necessarios pacotes_desktop && \
+    dnf5 clean all && \
+    rm -rfv /var/cache/* \
+    /var/lib/* \
+    /var/log/* \
+    /var/tmp/* \
+    /var/usrlocal/share/applications/mimeinfo.cache \
+    /var/roothome/.*
 
 # Instalação dos pacotes definidos nos arquivos de lista
 RUN grep -v '^#' /pacotes_necessarios | grep '^@' | sed 's/^@//' | \
