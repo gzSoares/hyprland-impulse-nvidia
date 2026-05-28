@@ -266,7 +266,6 @@ RUN systemctl enable NetworkManager && \
     systemctl mask systemd-remount-fs.service && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
     systemctl enable libvirtd.service && \
-    systemctl enable spice-vdagentd.service && \
     rm -fv pacotes_necessarios pacotes_desktop && \
     dnf5 clean all && \
     rm -rfv /var/cache/* \
