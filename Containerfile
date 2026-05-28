@@ -266,7 +266,6 @@ RUN systemctl enable NetworkManager && \
     systemctl mask systemd-remount-fs.service && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
     systemctl enable libvirtd.service && \
-    systemctl enable spice-vdagentd.service && \
     rm -rfv /var/roothome/.*
 
 # Instalação dos pacotes definidos nos arquivos de lista
