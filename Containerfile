@@ -212,6 +212,7 @@ RUN dnf5 install -y \
     upower \
     thermald \
     lm_sensors \
+    nvidia-driver-libs \
     ntsync-autoload \
     wtype \
     ydotool && \
