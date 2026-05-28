@@ -266,14 +266,8 @@ RUN systemctl enable NetworkManager && \
     systemctl mask systemd-remount-fs.service && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
     systemctl enable libvirtd.service && \
-    rm -fv pacotes_necessarios pacotes_desktop && \
-    dnf5 clean all && \
-    rm -rfv /var/cache/* \
-    /var/lib/* \
-    /var/log/* \
-    /var/tmp/* \
-    /var/usrlocal/share/applications/mimeinfo.cache \
-    /var/roothome/.*
+    systemctl enable spice-vdagentd.service && \
+    rm -rfv /var/roothome/.*
 
 # Instalação dos pacotes definidos nos arquivos de lista
 RUN grep -v '^#' /pacotes_necessarios | grep '^@' | sed 's/^@//' | \
