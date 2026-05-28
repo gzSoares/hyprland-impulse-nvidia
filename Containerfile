@@ -265,7 +265,6 @@ RUN systemctl enable NetworkManager && \
     systemctl enable thermald && \
     systemctl mask systemd-remount-fs.service && \
     systemctl mask akmods-keygen@akmods-keygen.service && \
-    systemctl enable libvirtd.service && \
     rm -rfv /var/roothome/.*
 
 # Instalação dos pacotes definidos nos arquivos de lista
