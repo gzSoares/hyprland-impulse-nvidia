@@ -64,6 +64,7 @@ RUN dnf5 config-manager addrepo \
 RUN dnf5 install -y \
     cava \
     pavucontrol \
+    pipewire-utils \
     wireplumber \
     libdbusmenu-gtk3-devel \
     playerctl && \
