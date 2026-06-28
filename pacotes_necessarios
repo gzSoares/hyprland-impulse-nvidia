@@ -33,6 +33,7 @@ htop
 micro
 nvtop
 ps_mem
+scrcpy
 
 # Qt6 (dependências para Quickshell e apps KDE)
 kdialog
