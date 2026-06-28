@@ -15,7 +15,7 @@ flatpak install -y flathub \
     org.gtk.Gtk3theme.adw-gtk3-dark \
     com.github.tchx84.Flatseal \
     org.telegram.desktop \
-    com.google.Chrome \
+    com.brave.Browser \
     org.mozilla.firefox \
     com.dec05eba.gpu_screen_recorder \
     com.discordapp.Discord \
@@ -28,7 +28,6 @@ flatpak install -y flathub \
     org.gnome.Boxes \
     org.gnome.Calculator \
     org.gnome.TextEditor \
-    org.kde.gwenview \
     page.codeberg.JakobDev.jdReplace \
     page.codeberg.libre_menu_editor.LibreMenuEditor
 
