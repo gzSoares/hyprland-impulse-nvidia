@@ -51,6 +51,7 @@ RUN dnf5 install -y dnf5-plugins && \
     dnf5 copr enable -y deltacopy/darkly && \
     dnf5 copr enable -y alternateved/eza && \
     dnf5 copr enable -y atim/starship && \
+    dnf5 copr enable -y zeno/scrcpy && \
     dnf5 clean all
 
 # KDE Material You Colors (OpenSUSE Build Service repo)
